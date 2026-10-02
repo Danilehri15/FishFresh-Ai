@@ -130,7 +130,45 @@ class AIEngine:
             top3 = tf.keras.applications.mobilenet_v3.decode_predictions(preds, top=3)[0]
 
             NON_FISH_KEYWORDS = {
-                "person", "man", "woman", "face", "mask", "bottle", "cup", "mug", "book", "pen", "shoe", "sneaker", "boot", "shirt", "suit", "jean", "hat", "wall", "door", "window", "tree", "plant", "leaf", "grass", "remote", "mouse", "keyboard", "monitor", "screen", "tv", "plate", "bowl", "fork", "knife", "spoon", "bag", "backpack", "purse", "wallet", "watch", "clock", "glass", "sunglass", "ring", "chain", "toy", "doll", "teddy", "ball", "bat", "glove", "car", "bus", "truck", "bike", "motor", "train", "plane", "boat", "ship", "cat", "dog", "bird", "horse", "cow", "pig", "sheep", "goat", "bear", "lion", "tiger", "elephant", "monkey", "snake", "spider", "insect", "bug", "butterfly", "bee", "ant", "fly", "worm", "finger", "hand", "arm", "leg", "foot", "laptop", "computer", "phone", "cellular", "ipod", "ipad", "tablet", "desk", "table", "chair", "sofa", "couch", "bed", "room", "house", "building", "street", "road", "car", "vehicle", "limousine", "minibus", "minivan", "wagon", "pickup", "cab", "sedan", "coupe", "jeep", "convertible", "racer", "sports_car", "wheel", "tire", "television", "pizza", "burger", "sandwich", "apple", "banana", "flower", "paper", "notebook", "floor", "carpet", "rug", "tile", "wood", "ceiling", "pen", "pencil", "eraser", "ruler", "box", "carton", "bottle", "can", "glass", "mug", "cup", "plate", "bowl", "fork", "knife", "spoon", "napkin", "tissue", "towel", "cloth", "fabric", "shirt", "pant", "shoe", "sock", "jacket", "coat", "hat", "cap", "glove", "scarf", "belt", "tie", "watch", "ring", "necklace", "bracelet", "earring", "glasses", "sunglasses", "mask", "helmet", "bag", "backpack", "purse", "wallet", "suitcase", "umbrella", "key", "lock", "door", "window", "wall", "ceiling", "floor", "carpet", "rug", "tile", "wood", "brick", "stone", "concrete", "metal", "plastic", "glass", "paper", "cardboard", "box", "carton", "bottle", "can", "glass", "mug"
+                "limousine", "minibus", "minivan", "wagon", "pickup", "cab", "sedan", "coupe",
+                "jeep", "convertible", "racer", "sports_car", "wheel", "tire", "bus", "truck",
+                "car", "vehicle", "motorcycle", "bicycle",
+                  "cat", "tabby", "siamese", "persian",
+                "dog", "terrier", "retriever", "hound", "shepherd", "poodle", "horse", "cow",
+                "sheep", "goat", "pig", "elephant", "bear", "monkey", "bird", "chair", "sofa",
+                "table", "desk", "bed", "laptop", "computer", "phone", "television", "pizza",
+                "burger", "sandwich", "apple", "banana", "flower", "building", "house", "face",
+                "finger", "hand", "nail", "person", "man", "woman", "child", "boy", "girl", "leg",
+                "arm", "foot", "shoe", "boot", "sneaker", "shirt", "suit", "tie", "jean", "pants",
+                "jacket", "coat", "hat", "cap", "glasses", "sunglasses", "mask", "glove", "watch",
+                "ring", "necklace", "bracelet", "earring", "backpack", "bag", "wallet", "purse",
+                "bottle", "cup", "mug", "plate", "bowl", "fork", "knife", "spoon", "paper", "book",
+                "pen", "pencil", "keyboard", "mouse", "monitor", "screen", "camera", "lens",
+                "wall", "floor", "ceiling", "window", "door", "tree", "grass", "dirt", "rock",
+                "stone", "sand", "water", "sky", "cloud", "sun", "moon", "star", "cellular", "telephone", "web_site", "comic_book", "seat_belt", "lipstick",
+                "hair_spray", "perfume", "microphone", "ipod", "abaya", "cloak", "sweatshirt",
+                "jersey", "t-shirt", "cardigan", "pajama", "bath_towel", "diaper", "apron",
+                "bikini", "bathing_cap", "cowboy_hat", "sombrero", "wig", "cellular_telephone",
+                "lens_cap", "loudspeaker", "cd_player", "iPod", "remote_control", "tripod",
+                "joystick", "sunglass", "loupe", "projector", "modem", "hard_disc", "mouse", "keyboard",
+                "potpie", "french_loaf", "bagel", "pretzel", "burrito", "hotdog", "pizza",
+                "meat_loaf", "guacamole", "ice_cream", "pomegranate", "fig", "lemon", "strawberry",
+                "orange", "banana", "apple", "pineapple", "jackfruit", "head_cabbage", "broccoli", 
+                "cauliflower", "zucchini", "spaghetti_squash", "acorn_squash", "butternut_squash", 
+                "human" , "person", "man", "woman", "child", "boy", "girl", "baby", "teenager", 
+                "adult", "elderly", "teen", "toddler", "infant", "adolescent", "youth", "senior", "grandparent",
+                "grandchild", "parent", "sibling", "cousin", "bread", "cake", "cookie", "brownie", "muffin",
+                  "croissant", "danish", "baguette", "roll", "roti", "naan", "tortilla", "pita", "flatbread", 
+                  "focaccia", "ciabatta", "brioche", "scone", "pretzel", "biscuit", "cracker", 
+                  "waffle", "pancake", "crepe", "blini", "dumpling",
+                  "samosa", "spring_roll", "egg_roll", "empanada","fingers", "finger_food", 
+                  "appetizer", "snack", "hors_d'oeuvre", "canape", "tapas", "antipasto", "mezze", 
+                  "dim_sum", "bruschetta", "Fruit", "vegetable", "pork", "beef", "chicken", "lamb", 
+                  "tv", "television", "monitor", "screen", "display", "projector", "laptop",
+                    "computer", "tablet", "smartphone", "cellphone", "mobile_phone", "camera",
+                      "camcorder", "video_camera", "drone" "dinasaur", "fossil", "skeleton", "bone", 
+                      "skull", "tooth", "claw", "horn", "antler","marble", "granite", "limestone", "sandstone", "slate", "basalt", "quartz", "crystal",
+                      "crocodile", "alligator", "lizard", "snake", "turtle", "tortoise", "frog", "toad", "salamander",
             }
 
             for _, name, conf in top3:
@@ -138,7 +176,8 @@ class AIEngine:
                 if conf >= 0.05 and any(kw in name_lower for kw in NON_FISH_KEYWORDS):
                     return True, name.replace("_", " ").title(), round(conf * 100, 1)
             return False, None, 0.0
-        except Exception:
+        except Exception as e:
+            print(f"[Gatekeeper Error] {e}")
             return False, None, 0.0
 
     def estimate_shelf_life(self, fresh_probability: float, species_key: str) -> Dict[str, Any]:
@@ -252,6 +291,9 @@ class AIEngine:
                 "recommendation": shelf_life["storage_guidance"],
             }
         }
+
+
+
 
 
 
