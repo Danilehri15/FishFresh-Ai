@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+models/
+*.h5
+*.keras
+external_eval_result*.json
+semaphore_deadlock_lab04/*.class
+
+.env
+atlas-credentials.env
+ngrok.exe
+ngrok.zip
+Dataset Files/
+*.log
+.idea/
+.vscode/
+extra/

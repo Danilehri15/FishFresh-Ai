@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+tensorflow==2.17.1
+numpy==1.26.4
+Pillow
+pymongo
+python-dotenv
+urllib3
+

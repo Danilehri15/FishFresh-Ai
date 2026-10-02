@@ -1,0 +1,68 @@
+{
+  "species_dataset": {
+    "dataset_name": "dataset_species",
+    "total_images": 8195,
+    "classes": {
+      "anchovy": 1418,
+      "horsemackerel": 1148,
+      "pomfret": 650,
+      "rohu": 413,
+      "salmon": 1441,
+      "sufaid_rohu": 1204,
+      "sulemani": 400,
+      "tilapia": 1521
+    },
+    "sample_dimensions": [
+      [
+        240,
+        360
+      ],
+      [
+        1350,
+        1800
+      ],
+      [
+        1024,
+        768
+      ],
+      [
+        1365,
+        1024
+      ],
+      [
+        259,
+        194
+      ]
+    ]
+  },
+  "freshness_dataset": {
+    "dataset_name": "dataset_freshness",
+    "total_images": 12538,
+    "classes": {
+      "fresh": 5548,
+      "spoiled": 6990
+    },
+    "sample_dimensions": [
+      [
+        3000,
+        4000
+      ],
+      [
+        3000,
+        4000
+      ],
+      [
+        3000,
+        4000
+      ],
+      [
+        3000,
+        4000
+      ],
+      [
+        3000,
+        4000
+      ]
+    ]
+  }
+}
