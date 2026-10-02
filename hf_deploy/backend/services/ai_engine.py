@@ -130,18 +130,12 @@ class AIEngine:
             top3 = tf.keras.applications.mobilenet_v3.decode_predictions(preds, top=3)[0]
 
             NON_FISH_KEYWORDS = {
-                "limousine", "minibus", "minivan", "wagon", "pickup", "cab", "sedan", "coupe",
-                "jeep", "convertible", "racer", "sports_car", "wheel", "tire", "bus", "truck",
-                "car", "vehicle", "motorcycle", "bicycle", "cat", "tabby", "siamese", "persian",
-                "dog", "terrier", "retriever", "hound", "shepherd", "poodle", "horse", "cow",
-                "sheep", "goat", "pig", "elephant", "bear", "monkey", "bird", "chair", "sofa",
-                "table", "desk", "bed", "laptop", "computer", "phone", "television", "pizza",
-                "burger", "sandwich", "apple", "banana", "flower", "building", "house"
+                "person", "man", "woman", "face", "mask", "bottle", "cup", "mug", "book", "pen", "shoe", "sneaker", "boot", "shirt", "suit", "jean", "hat", "wall", "door", "window", "tree", "plant", "leaf", "grass", "remote", "mouse", "keyboard", "monitor", "screen", "tv", "plate", "bowl", "fork", "knife", "spoon", "bag", "backpack", "purse", "wallet", "watch", "clock", "glass", "sunglass", "ring", "chain", "toy", "doll", "teddy", "ball", "bat", "glove", "car", "bus", "truck", "bike", "motor", "train", "plane", "boat", "ship", "cat", "dog", "bird", "horse", "cow", "pig", "sheep", "goat", "bear", "lion", "tiger", "elephant", "monkey", "snake", "spider", "insect", "bug", "butterfly", "bee", "ant", "fly", "worm", "finger", "hand", "arm", "leg", "foot", "laptop", "computer", "phone", "cellular", "ipod", "ipad", "tablet", "desk", "table", "chair", "sofa", "couch", "bed", "room", "house", "building", "street", "road", "car", "vehicle", "limousine", "minibus", "minivan", "wagon", "pickup", "cab", "sedan", "coupe", "jeep", "convertible", "racer", "sports_car", "wheel", "tire", "television", "pizza", "burger", "sandwich", "apple", "banana", "flower", "paper", "notebook", "floor", "carpet", "rug", "tile", "wood", "ceiling", "pen", "pencil", "eraser", "ruler", "box", "carton", "bottle", "can", "glass", "mug", "cup", "plate", "bowl", "fork", "knife", "spoon", "napkin", "tissue", "towel", "cloth", "fabric", "shirt", "pant", "shoe", "sock", "jacket", "coat", "hat", "cap", "glove", "scarf", "belt", "tie", "watch", "ring", "necklace", "bracelet", "earring", "glasses", "sunglasses", "mask", "helmet", "bag", "backpack", "purse", "wallet", "suitcase", "umbrella", "key", "lock", "door", "window", "wall", "ceiling", "floor", "carpet", "rug", "tile", "wood", "brick", "stone", "concrete", "metal", "plastic", "glass", "paper", "cardboard", "box", "carton", "bottle", "can", "glass", "mug"
             }
 
             for _, name, conf in top3:
                 name_lower = name.lower()
-                if conf >= 0.15 and any(kw in name_lower for kw in NON_FISH_KEYWORDS):
+                if conf >= 0.35 and any(kw in name_lower for kw in NON_FISH_KEYWORDS):
                     return True, name.replace("_", " ").title(), round(conf * 100, 1)
             return False, None, 0.0
         except Exception:
@@ -258,3 +252,6 @@ class AIEngine:
                 "recommendation": shelf_life["storage_guidance"],
             }
         }
+
+
+
