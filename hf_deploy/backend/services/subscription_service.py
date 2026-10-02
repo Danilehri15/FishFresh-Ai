@@ -60,3 +60,4 @@ class SubscriptionService:
             "message": "Congratulations! Your account has been upgraded to Premium Access with Unlimited AI Fish Scans."
         }
 
+
