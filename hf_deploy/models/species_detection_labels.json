@@ -1,0 +1,45 @@
+{
+  "model_name": "species_detection",
+  "created_at_utc": "2026-08-21T10:47:05.166952+00:00",
+  "image_size": [
+    224,
+    224
+  ],
+  "labels": [
+    "anchovy",
+    "horsemackerel",
+    "pomfret",
+    "rohu",
+    "salmon",
+    "sufaid_rohu",
+    "sulemani",
+    "tilapia"
+  ],
+  "train_count": 6555,
+  "validation_count": 1640,
+  "train_distribution": {
+    "anchovy": 1134,
+    "horsemackerel": 918,
+    "pomfret": 520,
+    "rohu": 330,
+    "salmon": 1153,
+    "sufaid_rohu": 963,
+    "sulemani": 320,
+    "tilapia": 1217
+  },
+  "validation_distribution": {
+    "anchovy": 284,
+    "horsemackerel": 230,
+    "pomfret": 130,
+    "rohu": 83,
+    "salmon": 288,
+    "sufaid_rohu": 241,
+    "sulemani": 80,
+    "tilapia": 304
+  },
+  "metrics": {
+    "accuracy": 0.8512,
+    "loss": 0.4591,
+    "top_2_accuracy": 0.9421
+  }
+}

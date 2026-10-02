@@ -4,6 +4,11 @@ __pycache__/
 models/
 *.h5
 *.keras
+
+# BUT allow the cloud deployment models (needed for Render)
+!hf_deploy/models/
+!hf_deploy/models/*.keras
+!hf_deploy/models/*.json
 external_eval_result*.json
 semaphore_deadlock_lab04/*.class
 
