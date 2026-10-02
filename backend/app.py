@@ -19,7 +19,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for Flutter Mobile, Web, and Desktop
+# Enable CORS for Flutter Mobdfile, Web, and Desktop
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
