@@ -173,7 +173,7 @@ class AIEngine:
 
             for _, name, conf in top3:
                 name_lower = name.lower()
-                if conf >= 0.05 and any(kw in name_lower for kw in NON_FISH_KEYWORDS):
+                if any(kw in name_lower for kw in NON_FISH_KEYWORDS):
                     return True, name.replace("_", " ").title(), round(conf * 100, 1)
             return False, None, 0.0
         except Exception as e:
@@ -291,6 +291,7 @@ class AIEngine:
                 "recommendation": shelf_life["storage_guidance"],
             }
         }
+
 
 
 
