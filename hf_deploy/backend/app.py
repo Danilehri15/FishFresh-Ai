@@ -95,7 +95,7 @@ async def predict_fish_image(
     if not can_scan:
         raise HTTPException(
             status_code=429,
-            detail="Daily free scan limit reached (5 scans/day). Please upgrade to Premium Access for unlimited scans."
+            detail="Daily free scan limit reached (200 scans/day). Please upgrade to Premium Access for unlimited scans."
         )
 
     image_bytes = await file.read()
@@ -240,3 +240,4 @@ def login(payload: LoginRequest):
     except Exception as e:
         print(f"[Auth] Login exception: {e}")
         raise HTTPException(status_code=500, detail=f"Server error: {e}")
+

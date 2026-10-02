@@ -59,3 +59,4 @@ class SubscriptionService:
             "transaction_id": f"TXN-PK-{int(datetime.now().timestamp())}",
             "message": "Congratulations! Your account has been upgraded to Premium Access with Unlimited AI Fish Scans."
         }
+
