@@ -29,7 +29,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/api/predict');
       final request = http.MultipartRequest('POST', uri);
       request.fields['user_id'] = userId;
-      request.headers['ngrok-skip-browser-warning'] = 'true';
+      
       request.files.add(
         http.MultipartFile.fromBytes('file', imageBytes, filename: filename),
       );
@@ -59,7 +59,7 @@ class ApiService {
   Future<List<MarketPriceItem>> fetchMarketPrices() async {
     try {
       final uri = Uri.parse('$baseUrl/api/market-prices');
-      final response = await http.get(uri, headers: {'ngrok-skip-browser-warning': 'true'}).timeout(const Duration(seconds: 10));
+      final response = await http.get(uri, headers: {}).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final list = json['data'] as List<dynamic>;
@@ -80,7 +80,7 @@ class ApiService {
       final response = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+            headers: {'Content-Type': 'application/json', },
             body: jsonEncode({'query': query, 'current_species': speciesId}),
           )
           .timeout(const Duration(seconds: 40));
@@ -106,7 +106,7 @@ class ApiService {
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/api/subscription/status?user_id=$userId');
-      final response = await http.get(uri, headers: {'ngrok-skip-browser-warning': 'true'}).timeout(const Duration(seconds: 8));
+      final response = await http.get(uri, headers: {}).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         return UserSubscription.fromJson(jsonDecode(response.body));
       }
@@ -141,7 +141,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/api/subscription/upgrade');
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+        headers: {'Content-Type': 'application/json', },
         body: jsonEncode({
           'user_id': userId,
           'payment_method': paymentMethod,
@@ -159,7 +159,7 @@ class ApiService {
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/api/user/scans?user_id=$userId');
-      final response = await http.get(uri, headers: {'ngrok-skip-browser-warning': 'true'}).timeout(const Duration(seconds: 10));
+      final response = await http.get(uri, headers: {}).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final list = json['scans'] as List<dynamic>;
@@ -180,7 +180,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/api/market-prices/check');
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+        headers: {'Content-Type': 'application/json', },
         body: jsonEncode({
           'species_id': speciesId,
           'asking_price_pkr': price,
@@ -202,7 +202,7 @@ class ApiService {
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/api/heatmap?city=$city');
-      final response = await http.get(uri, headers: {'ngrok-skip-browser-warning': 'true'}).timeout(const Duration(seconds: 10));
+      final response = await http.get(uri, headers: {}).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final list = json['markets'] as List<dynamic>;
@@ -223,7 +223,7 @@ class ApiService {
       final uri = Uri.parse(
         '$baseUrl/api/recommended-markets?city=$city&top_n=$topN',
       );
-      final response = await http.get(uri, headers: {'ngrok-skip-browser-warning': 'true'}).timeout(const Duration(seconds: 10));
+      final response = await http.get(uri, headers: {}).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final list = json['recommended_markets'] as List<dynamic>;
@@ -241,7 +241,7 @@ class ApiService {
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/api/avoid-markets?city=$city');
-      final response = await http.get(uri, headers: {'ngrok-skip-browser-warning': 'true'}).timeout(const Duration(seconds: 10));
+      final response = await http.get(uri, headers: {}).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final list = json['avoid_markets'] as List<dynamic>;
@@ -266,7 +266,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/api/scan-location');
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+        headers: {'Content-Type': 'application/json', },
         body: jsonEncode({
           'latitude': latitude,
           'longitude': longitude,
@@ -292,7 +292,7 @@ class ApiService {
       final response = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+            headers: {'Content-Type': 'application/json', },
             body: jsonEncode({
               'email': email,
               'password': password,
@@ -317,7 +317,7 @@ class ApiService {
       final response = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true'},
+            headers: {'Content-Type': 'application/json', },
             body: jsonEncode({'email': email, 'password': password}),
           )
           .timeout(const Duration(seconds: 10));
@@ -332,6 +332,8 @@ class ApiService {
     }
   }
 }
+
+
 
 
 

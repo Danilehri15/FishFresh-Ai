@@ -1,4 +1,5 @@
 import os
+import traceback
 from pathlib import Path
 from fastapi import FastAPI, File, UploadFile, Query, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -90,31 +91,38 @@ async def predict_fish_image(
     file: UploadFile = File(...),
     user_id: str = Form("default_user")
 ):
-    # Check subscription quota
-    can_scan = subscription_service.record_scan(user_id)
-    if not can_scan:
-        raise HTTPException(
-            status_code=429,
-            detail="Daily free scan limit reached (200 scans/day). Please upgrade to Premium Access for unlimited scans."
-        )
+    try:
+        # Check subscription quota
+        can_scan = subscription_service.record_scan(user_id)
+        if not can_scan:
+            raise HTTPException(
+                status_code=429,
+                detail="Daily free scan limit reached (200 scans/day). Please upgrade to Premium Access for unlimited scans."
+            )
 
-    image_bytes = await file.read()
-    if len(image_bytes) == 0:
-        raise HTTPException(status_code=400, detail="Empty image file received.")
+        image_bytes = await file.read()
+        if len(image_bytes) == 0:
+            raise HTTPException(status_code=400, detail="Empty image file received.")
 
-    result = ai_engine.predict(image_bytes, filename=file.filename)
-    
-    # Attach Live Market Price Comparison if fish recognized
-    if result.get("is_fish") and result.get("status") == "SUCCESS":
-        sp_id = result["species_detection"]["predicted_species"]
-        fair_price_data = market_service.evaluate_fair_price(
-            species_id=sp_id,
-            asking_price_pkr=result["species_detection"]["typical_market_price_pkr"]
-        )
-        result["market_price_info"] = fair_price_data
-        cloud_db.save_scan_history(user_id, result)
+        result = ai_engine.predict(image_bytes, filename=file.filename)
+        
+        # Attach Live Market Price Comparison if fish recognized
+        if result.get("is_fish") and result.get("status") == "SUCCESS":
+            sp_id = result["species_detection"]["predicted_species"]
+            fair_price_data = market_service.evaluate_fair_price(
+                species_id=sp_id,
+                asking_price_pkr=result["species_detection"]["typical_market_price_pkr"]
+            )
+            result["market_price_info"] = fair_price_data
+            cloud_db.save_scan_history(user_id, result)
 
-    return result
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"[PREDICT ERROR] {tb}")
+        raise HTTPException(status_code=500, detail=f"Predict error: {str(e)}")
 
 @app.get("/api/market-prices")
 def get_market_prices(city: str = "all"):

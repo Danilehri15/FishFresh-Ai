@@ -42,7 +42,7 @@ class SubscriptionService:
         key = f"{user_id}_{today}"
         used = self.daily_scans.get(key, 0)
 
-        if tier == "FREE" and used >= 5:
+        if tier == "FREE" and used >= 200:
             return False  # Limit reached
 
         self.daily_scans[key] = used + 1
