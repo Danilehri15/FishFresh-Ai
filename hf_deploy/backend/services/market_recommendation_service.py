@@ -73,7 +73,16 @@ class MarketRecommendationService:
             if dist < min_dist:
                 min_dist = dist
                 nearest = market
-        if nearest is None or min_dist > 3.0:`n            new_market_name = f"Live Scan Area ({round(lat, 3)}, {round(lon, 3)})"`n            self.known_markets.append({`n                "name": new_market_name,`n                "lat": lat,`n                "lon": lon,`n                "city": "All"`n            })`n            return new_market_name`n`n        return nearest["name"]
+        if nearest is None or min_dist > 3.0:
+            new_market_name = f"Live Scan Area ({round(lat, 3)}, {round(lon, 3)})"
+            self.known_markets.append({
+                "name": new_market_name,
+                "lat": lat,
+                "lon": lon,
+                "city": "All"
+            })
+            return new_market_name
+        return nearest["name"]
 
     def record_scan(self, latitude, longitude, species, freshness_score, is_fresh, user_id):
         market_area = self._get_nearest_market(latitude, longitude)
@@ -169,4 +178,5 @@ class MarketRecommendationService:
         market_scans = [s for s in self.scans if s["market_area"].lower() == market_name.lower()]
         market_scans.sort(key=lambda x: x["timestamp"], reverse=True)
         return market_scans[:limit]
+
 
