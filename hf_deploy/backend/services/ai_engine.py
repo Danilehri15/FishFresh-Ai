@@ -171,6 +171,16 @@ class AIEngine:
                       "crocodile", "alligator", "lizard", "snake", "turtle", "tortoise", "frog", "toad", "salamander",
             }
 
+            FISH_WHITELIST = {
+                "fish", "ray", "shark", "sturgeon", "gar", "puffer", "eel", "salmon", "trout", 
+                "tench", "barracouta", "coho", "anemone", "stingray", "goldfish"
+            }
+
+            for _, name, conf in top3:
+                name_lower = name.lower()
+                if any(fw in name_lower for fw in FISH_WHITELIST):
+                    return False, None, 0.0
+
             for _, name, conf in top3:
                 name_lower = name.lower()
                 if any(kw in name_lower for kw in NON_FISH_KEYWORDS):
