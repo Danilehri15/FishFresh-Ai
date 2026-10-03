@@ -145,7 +145,7 @@ class AIEngine:
                 "bottle", "cup", "mug", "plate", "bowl", "fork", "knife", "spoon", "paper", "book",
                 "pen", "pencil", "keyboard", "mouse", "monitor", "screen", "camera", "lens",
                 "wall", "floor", "ceiling", "window", "door", "tree", "grass", "dirt", "rock",
-                "stone", "sand", "water", "sky", "cloud", "sun", "moon", "star", "hook", "matchstick", "torch", "bubble", "face_powder", "lipstick", "lotion", "hair_spray", "perfume", "ski_mask", "oxygen_mask", "wig", "hair", "skin", "head", "neck_brace", "bandana", "bow_tie", "tie", "sunglass", "glasses", "goggles", "diaper", "pajama", "sweatshirt", "jersey", "t-shirt", "suit", "abaya", "cloak", "web_site", "digital_clock", "analog_clock", "envelope", "cellular", "telephone", "web_site", "comic_book", "seat_belt", "lipstick",
+                "stone", "sand", "water", "sky", "cloud", "sun", "moon", "star", "stool", "ottoman", "barstool", "furniture", "couch", "wardrobe", "cabinet", "dresser", "mirror", "lamp", "rug", "carpet", "fan", "ceiling_fan", "television", "tv", "microwave", "oven", "refrigerator", "fridge", "stove", "sink", "toilet", "bathtub", "shower", "trash_can", "ashcan", "dustbin", "wastebasket", "garbage_can", "pot", "pan", "plate", "bowl", "cup", "mug", "glass", "bottle", "jug", "pitcher", "vase", "flower", "plant", "tree", "grass", "leaf", "rock", "stone", "sand", "dirt", "soil", "mountain", "hill", "valley", "river", "lake", "ocean", "sea", "sky", "cloud", "sun", "moon", "star", "car", "truck", "bus", "van", "motorcycle", "bike", "bicycle", "scooter", "skateboard", "roller_skates", "shoe", "boot", "sandal", "slipper", "sock", "pants", "shirt", "jacket", "coat", "hat", "cap", "glove", "scarf", "tie", "belt", "watch", "ring", "necklace", "bracelet", "earring", "glasses", "sunglasses", "hook", "matchstick", "torch", "bubble", "face_powder", "lipstick", "lotion", "hair_spray", "perfume", "ski_mask", "oxygen_mask", "wig", "hair", "skin", "head", "neck_brace", "bandana", "bow_tie", "tie", "sunglass", "glasses", "goggles", "diaper", "pajama", "sweatshirt", "jersey", "t-shirt", "suit", "abaya", "cloak", "web_site", "digital_clock", "analog_clock", "envelope", "cellular", "telephone", "web_site", "comic_book", "seat_belt", "lipstick",
                 "hair_spray", "perfume", "microphone", "ipod", "abaya", "cloak", "sweatshirt",
                 "jersey", "t-shirt", "cardigan", "pajama", "bath_towel", "diaper", "apron",
                 "bikini", "bathing_cap", "cowboy_hat", "sombrero", "wig", "cellular_telephone",
@@ -301,6 +301,7 @@ class AIEngine:
                 "recommendation": shelf_life["storage_guidance"],
             }
         }
+
 
 
 
