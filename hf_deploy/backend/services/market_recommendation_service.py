@@ -34,6 +34,19 @@ class MarketRecommendationService:
                 if len(db_scans) > 0:
                     self.scans = db_scans
                     print(f"[Heatmap] Loaded {len(self.scans)} scans from MongoDB.")
+                    # Rebuild dynamic market locations from saved scans
+                    known_names = {m["name"] for m in self.known_markets}
+                    for scan in self.scans:
+                        area = scan.get("market_area", "")
+                        if area and area not in known_names:
+                            self.known_markets.append({
+                                "name": area,
+                                "lat": scan["latitude"],
+                                "lon": scan["longitude"],
+                                "city": "All"
+                            })
+                            known_names.add(area)
+                    print(f"[Heatmap] Total market areas: {len(self.known_markets)}")
                 else:
                     self._seed_data()
                     # save seed data to mongo
