@@ -1,6 +1,9 @@
 import uuid
 import datetime
 import random
+import os
+from pymongo import MongoClient
+import certifi
 import math
 
 class MarketRecommendationService:
@@ -19,7 +22,28 @@ class MarketRecommendationService:
             {"name": "F-7 Markaz", "lat": 33.7200, "lon": 73.0550, "city": "Islamabad"},
         ]
         self.scans = []
-        self._seed_data()
+        self.db = None
+        mongo_uri = os.getenv("MONGODB_URI")
+        if mongo_uri:
+            try:
+                client = MongoClient(mongo_uri, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=2000)
+                self.db = client["fish_fresh_db"]
+                
+                # Load existing scans from Mongo
+                db_scans = list(self.db.heatmap_scans.find({}, {"_id": 0}))
+                if len(db_scans) > 0:
+                    self.scans = db_scans
+                    print(f"[Heatmap] Loaded {len(self.scans)} scans from MongoDB.")
+                else:
+                    self._seed_data()
+                    # save seed data to mongo
+                    if len(self.scans) > 0:
+                        self.db.heatmap_scans.insert_many(self.scans)
+            except Exception as e:
+                print(f"[Heatmap] MongoDB error: {e}")
+                self._seed_data()
+        else:
+            self._seed_data()
 
     def _seed_data(self):
         species_list = ["Rohu", "Malla", "Trout", "Tilapia", "Mackerel"]
@@ -98,6 +122,11 @@ class MarketRecommendationService:
             "user_id": user_id
         }
         self.scans.append(scan)
+        if hasattr(self, 'db') and self.db is not None:
+            try:
+                self.db.heatmap_scans.insert_one(scan.copy())
+            except Exception as e:
+                print(f"[Heatmap] Error saving scan to DB: {e}")
         return scan
 
     def get_heatmap_data(self, city=None):
