@@ -357,9 +357,10 @@ class _HeatmapViewState extends State<HeatmapView> {
                         ),
                       ),
                       Positioned(
-                        bottom: 16,
+                        top: 16,
                         right: 16,
                         child: FloatingActionButton(
+                          heroTag: "myLocationFab",
                           backgroundColor: AppTheme.primaryTeal,
                           child: const Icon(Icons.my_location, color: Colors.white),
                           onPressed: () async {

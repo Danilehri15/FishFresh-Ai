@@ -13,9 +13,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AppStateProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => AppStateProvider())],
       child: const FishFreshApp(),
     ),
   );
@@ -56,20 +54,40 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppTheme.primaryTeal,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.smart_toy),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ChatbotView()),
-          );
-        },
+      body: IndexedStack(index: _currentIndex, children: _screens),
+      floatingActionButton: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A237E), Color(0xFF6A1B9A)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6A1B9A).withAlpha(100),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatbotView()),
+              );
+            },
+            child: const Center(
+              child: Icon(Icons.smart_toy, color: Colors.white, size: 26),
+            ),
+          ),
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
