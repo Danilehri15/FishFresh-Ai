@@ -464,33 +464,57 @@ class _HeatmapViewState extends State<HeatmapView> {
                       Positioned(
                         top: 16,
                         right: 16,
-                        child: FloatingActionButton(
-                          heroTag: "myLocationFab",
-                          backgroundColor: AppTheme.primaryTeal,
-                          child: const Icon(
-                            Icons.my_location,
-                            color: Colors.white,
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF00B4D8), Color(0xFF0077B6)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF0077B6).withAlpha(100),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          onPressed: () async {
-                            bool serviceEnabled =
-                                await Geolocator.isLocationServiceEnabled();
-                            if (!serviceEnabled) return;
-                            LocationPermission permission =
-                                await Geolocator.checkPermission();
-                            if (permission == LocationPermission.denied) {
-                              permission = await Geolocator.requestPermission();
-                              if (permission == LocationPermission.denied)
-                                return;
-                            }
-                            if (permission == LocationPermission.deniedForever)
-                              return;
-                            Position pos =
-                                await Geolocator.getCurrentPosition();
-                            _mapController.move(
-                              LatLng(pos.latitude, pos.longitude),
-                              14.0,
-                            );
-                          },
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () async {
+                                bool serviceEnabled =
+                                    await Geolocator.isLocationServiceEnabled();
+                                if (!serviceEnabled) return;
+                                LocationPermission permission =
+                                    await Geolocator.checkPermission();
+                                if (permission == LocationPermission.denied) {
+                                  permission = await Geolocator.requestPermission();
+                                  if (permission == LocationPermission.denied)
+                                    return;
+                                }
+                                if (permission == LocationPermission.deniedForever)
+                                  return;
+                                Position pos =
+                                    await Geolocator.getCurrentPosition();
+                                _mapController.move(
+                                  LatLng(pos.latitude, pos.longitude),
+                                  14.0,
+                                );
+                              },
+                              child: const Center(
+                                child: Icon(
+                                  Icons.my_location,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
