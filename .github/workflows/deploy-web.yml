@@ -27,7 +27,7 @@ jobs:
 
       - name: Build Web
         working-directory: ./fish_fresh_app
-        run: flutter build web --base-href /FishFresh-Ai/ --release
+        run: flutter build web --base-href /FishFresh-Ai/ --release --no-tree-shake-icons
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
