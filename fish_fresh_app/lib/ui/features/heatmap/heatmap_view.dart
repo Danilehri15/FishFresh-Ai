@@ -495,12 +495,14 @@ class _HeatmapViewState extends State<HeatmapView> {
                                 if (permission == LocationPermission.denied) {
                                   permission =
                                       await Geolocator.requestPermission();
-                                  if (permission == LocationPermission.denied)
+                                  if (permission == LocationPermission.denied) {
                                     return;
+                                  }
                                 }
                                 if (permission ==
-                                    LocationPermission.deniedForever)
+                                    LocationPermission.deniedForever) {
                                   return;
+                                }
                                 Position pos =
                                     await Geolocator.getCurrentPosition();
                                 _mapController.move(
