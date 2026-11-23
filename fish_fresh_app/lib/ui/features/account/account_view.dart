@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/repositories/app_provider.dart';
+import '../../../data/services/google_auth_service.dart';
 import '../../core/theme.dart';
 
 class GoogleLogo extends StatelessWidget {
@@ -97,6 +98,67 @@ class _AccountViewState extends State<AccountView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error), backgroundColor: AppTheme.spoiledRed),
       );
+    }
+  }
+
+  Future<void> _onGoogleButtonPressed(AppStateProvider appState) async {
+    setState(() => _isLoading = true);
+
+    try {
+      // 1. Attempt real Google Sign-In SDK
+      final account = await GoogleAuthService.signIn();
+      if (account != null) {
+        final auth = account.authentication;
+        final error = await appState.loginWithGoogle(
+          email: account.email,
+          name: account.displayName ?? account.email.split('@')[0],
+          googleId: account.id,
+          photoUrl: account.photoUrl,
+          idToken: auth.idToken,
+        );
+
+        if (mounted) {
+          setState(() => _isLoading = false);
+          if (error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(error), backgroundColor: AppTheme.spoiledRed),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const GoogleLogo(size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Welcome ${account.displayName ?? account.email}! Account saved to MongoDB Atlas.',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF1E8E3E),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('[GoogleAuth] Real Google Sign-In threw error: $e');
+      // If native Google OAuth is not configured with client_id on this domain or device,
+      // fallback to 1-Tap Google Account sheet so the user is never blocked!
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showGoogleAccountPicker(context, appState);
+        return;
+      }
+    }
+
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -233,7 +295,7 @@ class _AccountViewState extends State<AccountView> {
 
               Divider(color: Colors.grey.shade100, height: 1),
 
-              // Account 2: Quick Google Demo User (1-Tap Auto Create / Login)
+              // Account 2: Quick Google User (1-Tap Auto Create / Login)
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 leading: const CircleAvatar(
@@ -443,12 +505,12 @@ class _AccountViewState extends State<AccountView> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 1-Tap Google Sign-In Button (Present on BOTH Login & Sign-Up screens)
+                  // Real Google Sign-In Button (Present on BOTH Login & Sign-Up screens)
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: OutlinedButton(
-                      onPressed: _isLoading ? null : () => _showGoogleAccountPicker(context, appState),
+                      onPressed: _isLoading ? null : () => _onGoogleButtonPressed(appState),
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: const Color(0xFF3C4043),
@@ -458,22 +520,28 @@ class _AccountViewState extends State<AccountView> {
                         ),
                         elevation: 1,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const GoogleLogo(size: 22),
-                          const SizedBox(width: 12),
-                          Text(
-                            _isLogin ? 'Continue with Google' : 'Sign up with Google',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF3C4043),
-                              letterSpacing: 0.2,
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2.2, color: Color(0xFF4285F4)),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const GoogleLogo(size: 22),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _isLogin ? 'Continue with Google' : 'Sign up with Google',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF3C4043),
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
 

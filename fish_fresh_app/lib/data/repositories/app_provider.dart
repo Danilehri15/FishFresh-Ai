@@ -204,9 +204,15 @@ class AppStateProvider extends ChangeNotifier {
         _scanHistory.insert(0, res);
         try {
           LocationPermission perm = await Geolocator.checkPermission();
-          if (perm == LocationPermission.denied) { perm = await Geolocator.requestPermission(); }
-          if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) return res;
-          final pos = await Geolocator.getCurrentPosition(timeLimit: const Duration(seconds: 5));
+          if (perm == LocationPermission.denied) {
+            perm = await Geolocator.requestPermission();
+          }
+          if (perm == LocationPermission.denied ||
+              perm == LocationPermission.deniedForever)
+            return res;
+          final pos = await Geolocator.getCurrentPosition(
+            timeLimit: const Duration(seconds: 5),
+          );
           await _apiService.recordScanLocation(
             latitude: pos.latitude,
             longitude: pos.longitude,
