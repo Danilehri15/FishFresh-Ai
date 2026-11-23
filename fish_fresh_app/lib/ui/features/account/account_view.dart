@@ -105,7 +105,7 @@ class _AccountViewState extends State<AccountView> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Attempt real Google Sign-In SDK
+      // Real Google Sign-In SDK — no demo fallback
       final account = await GoogleAuthService.signIn();
       if (account != null) {
         final auth = account.authentication;
@@ -145,312 +145,26 @@ class _AccountViewState extends State<AccountView> {
           }
         }
         return;
-      }
-    } catch (e) {
-      debugPrint('[GoogleAuth] Real Google Sign-In threw error: $e');
-      // If native Google OAuth is not configured with client_id on this domain or device,
-      // fallback to 1-Tap Google Account sheet so the user is never blocked!
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _showGoogleAccountPicker(context, appState);
+      } else {
+        // User cancelled the Google sign-in
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
         return;
       }
-    }
-
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _handleGoogleAuth(AppStateProvider appState, String email, String name) async {
-    setState(() => _isLoading = true);
-
-    final error = await appState.loginWithGoogle(
-      email: email,
-      name: name,
-      googleId: 'google_${email.hashCode.abs()}',
-    );
-
-    setState(() => _isLoading = false);
-
-    if (mounted) {
-      if (error != null) {
+    } catch (e) {
+      debugPrint('[GoogleAuth] Google Sign-In error: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(error),
+            content: Text('Google Sign-In failed: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: AppTheme.spoiledRed,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const GoogleLogo(size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Welcome $name! Account saved to MongoDB Atlas.',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF1E8E3E),
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
     }
-  }
-
-  void _showGoogleAccountPicker(BuildContext context, AppStateProvider appState) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (bottomSheetCtx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Top drag bar
-              Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Google Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  GoogleLogo(size: 26),
-                  SizedBox(width: 10),
-                  Text(
-                    'Sign in with Google',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF202124),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '1-Tap automatic login & MongoDB account creation',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Divider(color: Colors.grey.shade200),
-
-              // Account 1: Daniyal Lehri (1-Tap Auto Create / Login)
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFF4285F4),
-                  radius: 20,
-                  child: Text(
-                    'D',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                ),
-                title: const Text(
-                  'Daniyal Lehri',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                ),
-                subtitle: Text(
-                  'daniyallehri098@gmail.com',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                ),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '1-Tap Login',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue.shade700),
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(bottomSheetCtx);
-                  _handleGoogleAuth(appState, 'daniyallehri098@gmail.com', 'Daniyal Lehri');
-                },
-              ),
-
-              Divider(color: Colors.grey.shade100, height: 1),
-
-              // Account 2: Quick Google User (1-Tap Auto Create / Login)
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFF34A853),
-                  radius: 20,
-                  child: Text(
-                    'F',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                ),
-                title: const Text(
-                  'Fish Fresh User',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                ),
-                subtitle: Text(
-                  'fishfresh.user@gmail.com',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                ),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '1-Tap Login',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green.shade700),
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(bottomSheetCtx);
-                  _handleGoogleAuth(appState, 'fishfresh.user@gmail.com', 'Fish Fresh User');
-                },
-              ),
-
-              Divider(color: Colors.grey.shade100, height: 1),
-
-              // Account 3: Custom Google Account
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                leading: CircleAvatar(
-                  backgroundColor: Colors.grey.shade100,
-                  radius: 20,
-                  child: const Icon(Icons.person_add_alt_1, color: Color(0xFF5F6368)),
-                ),
-                title: const Text(
-                  'Use another Google account',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                ),
-                subtitle: Text(
-                  'Auto-creates MongoDB account instantly',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                ),
-                onTap: () {
-                  Navigator.pop(bottomSheetCtx);
-                  _showCustomGoogleAccountDialog(context, appState);
-                },
-              ),
-
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.shield_outlined, size: 14, color: Colors.green.shade700),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Stores user profile & scan history directly into MongoDB Atlas',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showCustomGoogleAccountDialog(BuildContext context, AppStateProvider appState) {
-    final emailCustomCtrl = TextEditingController();
-    final nameCustomCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: const [
-            GoogleLogo(size: 24),
-            SizedBox(width: 10),
-            Text('Google Account', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Enter your Google email. If you are new, it will automatically create your account in MongoDB Atlas:',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameCustomCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Full Name (Optional)',
-                prefixIcon: Icon(Icons.badge_outlined),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailCustomCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Google Email',
-                hintText: 'yourname@gmail.com',
-                prefixIcon: Icon(Icons.email_outlined),
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final email = emailCustomCtrl.text.trim();
-              final name = nameCustomCtrl.text.trim();
-              if (email.isEmpty || !email.contains('@')) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a valid Gmail address.')),
-                );
-                return;
-              }
-              Navigator.pop(dialogCtx);
-              _handleGoogleAuth(
-                appState,
-                email,
-                name.isNotEmpty ? name : email.split('@')[0],
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4285F4),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Sign In with Google'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
