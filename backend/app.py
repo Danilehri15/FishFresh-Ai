@@ -47,6 +47,13 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
+class GoogleAuthRequest(BaseModel):
+    email: str
+    name: Optional[str] = None
+    google_id: Optional[str] = None
+    photo_url: Optional[str] = None
+    id_token: Optional[str] = None
+
 class ChatRequest(BaseModel):
     query: str
     current_species: Optional[str] = None
@@ -239,4 +246,25 @@ def login(payload: LoginRequest):
         raise
     except Exception as e:
         print(f"[Auth] Login exception: {e}")
+        raise HTTPException(status_code=500, detail=f"Server error: {e}")
+
+@app.post("/api/auth/google")
+def google_auth(payload: GoogleAuthRequest):
+    try:
+        if not payload.email or "@" not in payload.email:
+            raise HTTPException(status_code=400, detail="A valid email is required for Google authentication.")
+        
+        res = cloud_db.google_login_or_register(
+            email=payload.email,
+            name=payload.name or payload.email.split("@")[0].capitalize(),
+            google_id=payload.google_id,
+            photo_url=payload.photo_url
+        )
+        if res.get("success"):
+            return res
+        raise HTTPException(status_code=400, detail=res.get("error", "Google authentication failed"))
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Auth] Google auth exception: {e}")
         raise HTTPException(status_code=500, detail=f"Server error: {e}")

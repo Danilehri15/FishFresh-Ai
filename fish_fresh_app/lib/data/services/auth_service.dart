@@ -44,4 +44,36 @@ class AuthService {
       return {'success': false, 'error': 'Connection error: $e'};
     }
   }
+
+  Future<Map<String, dynamic>> loginWithGoogle({
+    required String email,
+    String? name,
+    String? googleId,
+    String? photoUrl,
+    String? idToken,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/auth/google');
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'name': name,
+          'google_id': googleId,
+          'photo_url': photoUrl,
+          'id_token': idToken,
+        }),
+      ).timeout(const Duration(seconds: 12));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final body = jsonDecode(response.body);
+        return {'success': false, 'error': body['detail'] ?? 'Google authentication failed'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Connection error: $e'};
+    }
+  }
 }

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/scan_result.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/market_price_model.dart';
@@ -45,14 +46,63 @@ class AppStateProvider extends ChangeNotifier {
   String _userName = '';
   String get userName => _userName;
 
+  String _userEmail = '';
+  String get userEmail => _userEmail;
+
+  String? _userPhotoUrl;
+  String? get userPhotoUrl => _userPhotoUrl;
+
+  String _authProvider = '';
+  String get authProvider => _authProvider;
+
   bool get isLoggedIn => _userId.isNotEmpty;
+  bool get isGoogleUser => _authProvider == 'google';
+
+  AppStateProvider() {
+    _restoreSavedUserSession();
+  }
+
+  Future<void> _restoreSavedUserSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedId = prefs.getString('saved_user_id') ?? '';
+      if (savedId.isNotEmpty) {
+        _userId = savedId;
+        _userName = prefs.getString('saved_user_name') ?? '';
+        _userEmail = prefs.getString('saved_user_email') ?? '';
+        _userPhotoUrl = prefs.getString('saved_user_photo_url');
+        _authProvider = prefs.getString('saved_auth_provider') ?? '';
+        _apiService.setUserId(_userId);
+      }
+    } catch (_) {}
+    await refreshData();
+  }
+
+  Future<void> _persistUserSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('saved_user_id', _userId);
+      await prefs.setString('saved_user_name', _userName);
+      await prefs.setString('saved_user_email', _userEmail);
+      if (_userPhotoUrl != null) {
+        await prefs.setString('saved_user_photo_url', _userPhotoUrl!);
+      } else {
+        await prefs.remove('saved_user_photo_url');
+      }
+      await prefs.setString('saved_auth_provider', _authProvider);
+    } catch (_) {}
+  }
 
   Future<String?> register(String email, String password, String name) async {
     final res = await _authService.registerUser(email, password, name);
     if (res['success'] == true) {
-      _userId = res['user_id'];
-      _userName = res['name'];
+      _userId = res['user_id'] ?? '';
+      _userName = res['name'] ?? name;
+      _userEmail = res['email'] ?? email;
+      _authProvider = 'email';
+      _userPhotoUrl = null;
       _apiService.setUserId(_userId);
+      await _persistUserSession();
       await refreshData();
       return null;
     }
@@ -62,21 +112,64 @@ class AppStateProvider extends ChangeNotifier {
   Future<String?> login(String email, String password) async {
     final res = await _authService.loginUser(email, password);
     if (res['success'] == true) {
-      _userId = res['user_id'];
-      _userName = res['name'];
+      _userId = res['user_id'] ?? '';
+      _userName = res['name'] ?? 'User';
+      _userEmail = res['email'] ?? email;
+      _authProvider = res['auth_provider'] ?? 'email';
+      _userPhotoUrl = res['photo_url'];
       _apiService.setUserId(_userId);
+      await _persistUserSession();
       await refreshData();
       return null;
     }
     return res['error'];
   }
 
-  void logout() {
+  Future<String?> loginWithGoogle({
+    required String email,
+    String? name,
+    String? googleId,
+    String? photoUrl,
+    String? idToken,
+  }) async {
+    final res = await _authService.loginWithGoogle(
+      email: email,
+      name: name,
+      googleId: googleId,
+      photoUrl: photoUrl,
+      idToken: idToken,
+    );
+    if (res['success'] == true) {
+      _userId = res['user_id'] ?? '';
+      _userName = res['name'] ?? email.split('@')[0];
+      _userEmail = res['email'] ?? email;
+      _userPhotoUrl = res['photo_url'];
+      _authProvider = 'google';
+      _apiService.setUserId(_userId);
+      await _persistUserSession();
+      await refreshData();
+      return null;
+    }
+    return res['error'] ?? 'Google sign-in failed';
+  }
+
+  Future<void> logout() async {
     _userId = '';
     _userName = '';
+    _userEmail = '';
+    _userPhotoUrl = null;
+    _authProvider = '';
     _apiService.setUserId('default_user');
     _scanHistory = [];
     _subscription = null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('saved_user_id');
+      await prefs.remove('saved_user_name');
+      await prefs.remove('saved_user_email');
+      await prefs.remove('saved_user_photo_url');
+      await prefs.remove('saved_auth_provider');
+    } catch (_) {}
     notifyListeners();
   }
 
@@ -84,10 +177,6 @@ class AppStateProvider extends ChangeNotifier {
     final targetUserId = _userId.isNotEmpty ? _userId : 'default_user';
     await _apiService.upgradeToPremium('GooglePay', userId: targetUserId);
     await refreshData();
-  }
-
-  AppStateProvider() {
-    refreshData();
   }
 
   Future<void> refreshData() async {
@@ -177,6 +266,3 @@ class AppStateProvider extends ChangeNotifier {
     return _apiService.checkFairPrice(speciesId, price, city);
   }
 }
-
-
-
