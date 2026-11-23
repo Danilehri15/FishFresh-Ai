@@ -1,4 +1,8 @@
 import os
+import threading
+import time
+import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import FastAPI, File, UploadFile, Query, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -75,6 +79,48 @@ class ScanLocationRequest(BaseModel):
     freshness_score: float  # 0-1
     is_fresh: bool
     user_id: str = "default_user"
+
+def _keep_alive_worker():
+    """
+    Self-ping background worker.
+    Render's free tier spins down (sleeps) after 15 minutes of inactivity.
+    Pinging every 10 minutes (600s) resets Render's inactivity timer and keeps the backend awake 24/7!
+    """
+    time.sleep(45)  # Wait 45 seconds after container boot before first ping
+    raw_url = os.getenv("RENDER_EXTERNAL_URL", "https://fish-fresh-backend.onrender.com")
+    base_url = raw_url.rstrip("/")
+    ping_url = f"{base_url}/api/ping"
+    
+    print(f"[KeepAlive] Self-ping background worker started. Target: {ping_url}")
+    interval_seconds = 600  # 10 minutes
+    
+    while True:
+        try:
+            req = urllib.request.Request(
+                ping_url,
+                headers={"User-Agent": "FishFresh-KeepAlive/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                code = resp.getcode()
+                print(f"[KeepAlive] Heartbeat ping successful -> {ping_url} (HTTP {code}) at {datetime.now(timezone.utc).strftime('%H:%M:%S UTC')}")
+        except Exception as e:
+            print(f"[KeepAlive] Heartbeat ping warning ({ping_url}): {e}")
+            
+        time.sleep(interval_seconds)
+
+@app.on_event("startup")
+def on_startup_keep_alive():
+    t = threading.Thread(target=_keep_alive_worker, daemon=True, name="keep_alive_thread")
+    t.start()
+    print("[KeepAlive] Keep-alive daemon thread successfully spawned.")
+
+@app.get("/api/ping")
+def ping_keep_alive():
+    return {
+        "status": "PONG",
+        "message": "Fish Fresh AI Backend is awake and active!",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
 
 @app.get("/api/health")
 def health_check():

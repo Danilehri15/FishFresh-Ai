@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,8 +59,27 @@ class AppStateProvider extends ChangeNotifier {
   bool get isLoggedIn => _userId.isNotEmpty;
   bool get isGoogleUser => _authProvider == 'google';
 
+  Timer? _keepAliveTimer;
+
   AppStateProvider() {
     _restoreSavedUserSession();
+    _startKeepAlive();
+  }
+
+  void _startKeepAlive() {
+    _keepAliveTimer?.cancel();
+    // Immediate ping to wake server if cold
+    _apiService.pingServer();
+    // Ping every 10 minutes to prevent Render from sleeping
+    _keepAliveTimer = Timer.periodic(const Duration(minutes: 10), (_) {
+      _apiService.pingServer();
+    });
+  }
+
+  @override
+  void dispose() {
+    _keepAliveTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _restoreSavedUserSession() async {

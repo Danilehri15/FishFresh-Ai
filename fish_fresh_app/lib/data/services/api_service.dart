@@ -20,6 +20,16 @@ class ApiService {
     baseUrl = url;
   }
 
+  Future<bool> pingServer() async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/ping');
+      final res = await http.get(uri).timeout(const Duration(seconds: 8));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<ScanResponse> uploadAndPredict(
     Uint8List imageBytes,
     String filename, {
