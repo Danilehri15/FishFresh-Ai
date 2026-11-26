@@ -17,6 +17,10 @@ class GoogleAuthService {
 
   static Future<void>? _initFuture;
 
+  /// True while the admin login screen is open: Google sign-ins then go to the
+  /// admin flow instead of logging into the normal user account.
+  static bool adminMode = false;
+
   /// Must complete before rendering the web button or calling [signIn].
   static Future<void> ensureInitialized() {
     return _initFuture ??= GoogleSignIn.instance.initialize(

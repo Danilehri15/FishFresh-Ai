@@ -6,6 +6,8 @@ class UserSubscription {
   final int scansUsedToday;
   final dynamic scansRemainingToday;
   final List<String> features;
+  final DateTime? planExpiresAt;
+  final int? daysRemaining;
 
   UserSubscription({
     required this.userId,
@@ -15,6 +17,8 @@ class UserSubscription {
     required this.scansUsedToday,
     required this.scansRemainingToday,
     required this.features,
+    this.planExpiresAt,
+    this.daysRemaining,
   });
 
   factory UserSubscription.fromJson(Map<String, dynamic> json) {
@@ -26,7 +30,10 @@ class UserSubscription {
       scansUsedToday: json['scans_used_today'] ?? 0,
       scansRemainingToday: json['scans_remaining_today'] ?? 20,
       features: (json['features'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      planExpiresAt: json['plan_expires_at'] is String
+          ? DateTime.tryParse(json['plan_expires_at'])?.toLocal()
+          : null,
+      daysRemaining: (json['days_remaining'] as num?)?.toInt(),
     );
   }
 }
-

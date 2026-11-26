@@ -189,15 +189,34 @@ def fishery_chatbot(payload: ChatRequest):
 
 @app.get("/api/subscription/status")
 def get_subscription_status(user_id: str = "default_user"):
-    return subscription_service.get_user_status(user_id=user_id)
+    # Registered users: plan + expiry come from MongoDB (expired Premium auto-downgrades).
+    info = cloud_db.get_effective_plan(user_id)
+    if info is not None:
+        subscription_service.user_tiers[user_id] = info["plan"]
+    status = subscription_service.get_user_status(user_id=user_id)
+    if info is not None:
+        expires = info["plan_expires_at"]
+        status["plan_expires_at"] = expires.isoformat() if expires else None
+        status["days_remaining"] = info["days_remaining"]
+    return status
 
 @app.post("/api/subscription/upgrade")
 def upgrade_subscription(payload: UpgradeRequest):
-    return subscription_service.upgrade_to_premium(
+    result = subscription_service.upgrade_to_premium(
         user_id=payload.user_id,
         payment_method=payload.payment_method,
         amount_pkr=payload.amount_pkr
     )
+    # Persist plan, 30-day expiry and the payment record for registered users.
+    expiry = cloud_db.activate_premium(
+        payload.user_id,
+        payment_method=payload.payment_method,
+        amount_pkr=payload.amount_pkr,
+        transaction_id=result["transaction_id"],
+    )
+    if expiry is not None:
+        result["plan_expires_at"] = expiry.isoformat()
+    return result
 
 @app.get("/api/species")
 def get_species_catalog():
@@ -350,3 +369,9 @@ def google_auth(payload: GoogleAuthRequest):
     except Exception as e:
         print(f"[Auth] Google auth exception: {e}")
         raise HTTPException(status_code=500, detail=f"Server error: {e}")
+
+
+# Admin dashboard API (see backend/admin_routes.py)
+from backend.admin_routes import build_admin_router  # noqa: E402
+
+app.include_router(build_admin_router(cloud_db, verify_google_id_token))

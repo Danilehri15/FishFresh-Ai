@@ -7,6 +7,7 @@ import '../../../data/repositories/app_provider.dart';
 import '../../../data/services/google_auth_service.dart';
 import '../../core/theme.dart';
 
+import '../admin/admin_login_view.dart';
 import 'google_btn.dart';
 import 'google_logo.dart';
 
@@ -65,7 +66,8 @@ class _AccountViewState extends State<AccountView> {
       // arrives here -> backend verifies token & creates/logs in the MongoDB user.
       _googleSub = GoogleAuthService.authenticationEvents.listen(
         (event) {
-          if (event is GoogleSignInAuthenticationEventSignIn) {
+          if (event is GoogleSignInAuthenticationEventSignIn &&
+              !GoogleAuthService.adminMode) {
             _completeGoogleLogin(event.user);
           }
         },
@@ -311,6 +313,22 @@ class _AccountViewState extends State<AccountView> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Divider(color: Colors.grey.shade200),
+                  TextButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AdminLoginView()),
+                    ),
+                    icon: Icon(Icons.admin_panel_settings_outlined,
+                        size: 20, color: Colors.grey.shade700),
+                    label: Text(
+                      'Admin Portal',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -425,7 +443,11 @@ class _AccountViewState extends State<AccountView> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  isPremium ? 'Premium Member' : 'Free Plan',
+                                  isPremium
+                                      ? (sub?.daysRemaining != null
+                                          ? 'Premium · ${sub!.daysRemaining} days left'
+                                          : 'Premium Member')
+                                      : 'Free Plan',
                                   style: TextStyle(
                                     color: isPremium
                                         ? Colors.orange

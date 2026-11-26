@@ -25,6 +25,9 @@ class ScanResponse {
 
   factory ScanResponse.fromJson(Map<String, dynamic> json) {
     final bool isFish = json['is_fish'] ?? (json['status'] == 'SUCCESS');
+    final DateTime? scannedAt = json['scanned_at'] is String
+        ? DateTime.tryParse(json['scanned_at'])?.toLocal()
+        : null;
     if (!isFish || json['status'] == 'REJECTED') {
       return ScanResponse(
         imageFile: json['image_file'] ?? 'unknown.jpg',
@@ -32,6 +35,7 @@ class ScanResponse {
         isFish: false,
         rejectionReason: json['reason'] ?? 'Non-fish image detected.',
         message: json['message'] ?? 'Please upload a clear photo of a fish (whole fish, eye, or gills).',
+        scannedAt: scannedAt,
       );
     }
 
@@ -43,6 +47,7 @@ class ScanResponse {
       freshness: json['freshness_detection'] != null ? FreshnessData.fromJson(json['freshness_detection']) : null,
       shelfLife: json['shelf_life_estimation'] != null ? ShelfLifeData.fromJson(json['shelf_life_estimation']) : null,
       marketPrice: json['market_price_info'] != null ? MarketPriceComparison.fromJson(json['market_price_info']) : null,
+      scannedAt: scannedAt,
     );
   }
 }
