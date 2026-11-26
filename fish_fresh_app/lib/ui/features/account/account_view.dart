@@ -1,66 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import '../../../data/repositories/app_provider.dart';
 import '../../../data/services/google_auth_service.dart';
 import '../../core/theme.dart';
 
-class GoogleLogo extends StatelessWidget {
-  final double size;
-  const GoogleLogo({super.key, this.size = 22.0});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: const _GoogleLogoPainter(),
-    );
-  }
-}
-
-class _GoogleLogoPainter extends CustomPainter {
-  const _GoogleLogoPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
-    final center = Offset(w / 2, h / 2);
-    final radius = w / 2;
-    final strokeWidth = w * 0.22;
-
-    final rect = Rect.fromCircle(center: center, radius: radius - strokeWidth / 2);
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt;
-
-    // Red (top arc)
-    paint.color = const Color(0xFFEA4335);
-    canvas.drawArc(rect, -2.6, 1.4, false, paint);
-
-    // Yellow (left arc)
-    paint.color = const Color(0xFFFBBC05);
-    canvas.drawArc(rect, 2.3, 1.4, false, paint);
-
-    // Green (bottom arc)
-    paint.color = const Color(0xFF34A853);
-    canvas.drawArc(rect, 0.7, 1.6, false, paint);
-
-    // Blue (right arc)
-    paint.color = const Color(0xFF4285F4);
-    canvas.drawArc(rect, -1.2, 1.9, false, paint);
-
-    // Blue horizontal bar
-    final barPaint = Paint()
-      ..color = const Color(0xFF4285F4)
-      ..style = PaintingStyle.fill;
-    final barRect = Rect.fromLTWH(w * 0.45, h * 0.5 - strokeWidth / 2, w * 0.53, strokeWidth);
-    canvas.drawRect(barRect, barPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+import 'google_btn.dart';
+import 'google_logo.dart';
 
 class AccountView extends StatefulWidget {
   const AccountView({super.key});
@@ -101,70 +49,113 @@ class _AccountViewState extends State<AccountView> {
     }
   }
 
-  Future<void> _onGoogleButtonPressed(AppStateProvider appState) async {
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _googleSub;
+  bool _googleReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initGoogle();
+  }
+
+  Future<void> _initGoogle() async {
+    try {
+      await GoogleAuthService.ensureInitialized();
+      // Every successful Google sign-in (web rendered button OR mobile picker)
+      // arrives here -> backend verifies token & creates/logs in the MongoDB user.
+      _googleSub = GoogleAuthService.authenticationEvents.listen(
+        (event) {
+          if (event is GoogleSignInAuthenticationEventSignIn) {
+            _completeGoogleLogin(event.user);
+          }
+        },
+        onError: (Object e) => _showGoogleError(e),
+      );
+    } catch (e) {
+      debugPrint('[GoogleAuth] Initialize error: $e');
+    }
+    if (mounted) setState(() => _googleReady = true);
+  }
+
+  @override
+  void dispose() {
+    _googleSub?.cancel();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Mobile/desktop only — on web Google's own button starts the flow.
+  Future<void> _onGoogleButtonPressed() async {
+    setState(() => _isLoading = true);
+    try {
+      final account = await GoogleAuthService.signIn();
+      // Success is handled by the authenticationEvents listener.
+      if (account == null && mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      _showGoogleError(e);
+    }
+  }
+
+  Future<void> _completeGoogleLogin(GoogleSignInAccount account) async {
+    if (!mounted) return;
+    final appState = context.read<AppStateProvider>();
+    if (appState.isLoggedIn) return;
     setState(() => _isLoading = true);
 
-    try {
-      // Real Google Sign-In SDK — no demo fallback
-      final account = await GoogleAuthService.signIn();
-      if (account != null) {
-        final auth = account.authentication;
-        final error = await appState.loginWithGoogle(
-          email: account.email,
-          name: account.displayName ?? account.email.split('@')[0],
-          googleId: account.id,
-          photoUrl: account.photoUrl,
-          idToken: auth.idToken,
-        );
+    final error = await appState.loginWithGoogle(
+      email: account.email,
+      name: account.displayName ?? account.email.split('@')[0],
+      googleId: account.id,
+      photoUrl: account.photoUrl,
+      idToken: account.authentication.idToken,
+    );
 
-        if (mounted) {
-          setState(() => _isLoading = false);
-          if (error != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(error), backgroundColor: AppTheme.spoiledRed),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const GoogleLogo(size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Welcome ${account.displayName ?? account.email}! Account saved to MongoDB Atlas.',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
-                backgroundColor: const Color(0xFF1E8E3E),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
-        }
-        return;
-      } else {
-        // User cancelled the Google sign-in
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
-        return;
-      }
-    } catch (e) {
-      debugPrint('[GoogleAuth] Google Sign-In error: $e');
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Google Sign-In failed: ${e.toString().replaceAll('Exception: ', '')}'),
-            backgroundColor: AppTheme.spoiledRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (error != null) {
+      await GoogleAuthService.signOut();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: AppTheme.spoiledRed),
+      );
+      return;
     }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const GoogleLogo(size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Welcome ${account.displayName ?? account.email}!',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF1E8E3E),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showGoogleError(Object e) {
+    debugPrint('[GoogleAuth] Google Sign-In error: $e');
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    final msg = e is GoogleSignInException
+        ? (e.description ?? e.code.name)
+        : e.toString().replaceAll('Exception: ', '');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Google Sign-In failed: $msg'),
+        backgroundColor: AppTheme.spoiledRed,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -220,43 +211,11 @@ class _AccountViewState extends State<AccountView> {
                   const SizedBox(height: 24),
 
                   // Real Google Sign-In Button (Present on BOTH Login & Sign-Up screens)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: OutlinedButton(
-                      onPressed: _isLoading ? null : () => _onGoogleButtonPressed(appState),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF3C4043),
-                        side: BorderSide(color: Colors.grey.shade300, width: 1.2),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 1,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.2, color: Color(0xFF4285F4)),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const GoogleLogo(size: 22),
-                                const SizedBox(width: 12),
-                                Text(
-                                  _isLogin ? 'Continue with Google' : 'Sign up with Google',
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF3C4043),
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
+                  // New users are auto-registered in MongoDB on first Google sign-in.
+                  buildGoogleButton(
+                    isLogin: _isLogin,
+                    isLoading: _isLoading || !_googleReady,
+                    onPressed: _onGoogleButtonPressed,
                   ),
 
                   const SizedBox(height: 20),

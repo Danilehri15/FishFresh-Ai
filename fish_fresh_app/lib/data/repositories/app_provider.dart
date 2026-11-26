@@ -9,6 +9,7 @@ import '../models/chat_message.dart';
 import '../models/subscription_model.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../services/google_auth_service.dart';
 
 class AppStateProvider extends ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -174,6 +175,9 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    if (_authProvider == 'google') {
+      await GoogleAuthService.signOut();
+    }
     _userId = '';
     _userName = '';
     _userEmail = '';
