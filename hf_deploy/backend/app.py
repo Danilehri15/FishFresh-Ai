@@ -1,4 +1,6 @@
 import os
+import threading
+import time
 import traceback
 import json
 import urllib.error
@@ -81,6 +83,31 @@ class ScanLocationRequest(BaseModel):
     freshness_score: float  # 0-1
     is_fresh: bool
     user_id: str = "default_user"
+
+
+KEEP_ALIVE_INTERVAL_SECONDS = 600  # 10 min; Render free tier sleeps after 15 min idle
+
+
+def _keep_alive_worker():
+    """Ping our own public URL so Render sees traffic and never spins the server down."""
+    time.sleep(45)  # let the server finish booting first
+    base_url = os.getenv("RENDER_EXTERNAL_URL", "https://fish-fresh-backend.onrender.com").rstrip("/")
+    ping_url = f"{base_url}/api/ping"
+    print(f"[KeepAlive] Self-ping started -> {ping_url} every {KEEP_ALIVE_INTERVAL_SECONDS}s")
+    while True:
+        try:
+            req = urllib.request.Request(ping_url, headers={"User-Agent": "FishFresh-KeepAlive/1.0"})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                print(f"[KeepAlive] ping OK (HTTP {resp.getcode()}) at {datetime.now(timezone.utc):%H:%M:%S} UTC")
+        except Exception as e:
+            print(f"[KeepAlive] ping failed: {e}")
+        time.sleep(KEEP_ALIVE_INTERVAL_SECONDS)
+
+
+@app.on_event("startup")
+def start_keep_alive():
+    threading.Thread(target=_keep_alive_worker, daemon=True, name="keep_alive").start()
+
 
 @app.get("/api/ping")
 def ping_keep_alive():
