@@ -1,5 +1,10 @@
 import os
 import traceback
+import json
+import urllib.error
+import urllib.parse
+import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import FastAPI, File, UploadFile, Query, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,6 +49,13 @@ class RegisterRequest(BaseModel):
     password: str
     name: str
 
+class GoogleAuthRequest(BaseModel):
+    email: str
+    name: Optional[str] = None
+    google_id: Optional[str] = None
+    photo_url: Optional[str] = None
+    id_token: Optional[str] = None
+
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -69,6 +81,14 @@ class ScanLocationRequest(BaseModel):
     freshness_score: float  # 0-1
     is_fresh: bool
     user_id: str = "default_user"
+
+@app.get("/api/ping")
+def ping_keep_alive():
+    return {
+        "status": "PONG",
+        "message": "Fish Fresh AI Backend is awake and active!",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
 
 @app.get("/api/health")
 def health_check():
@@ -249,3 +269,57 @@ def login(payload: LoginRequest):
         print(f"[Auth] Login exception: {e}")
         raise HTTPException(status_code=500, detail=f"Server error: {e}")
 
+
+GOOGLE_WEB_CLIENT_ID = os.getenv(
+    "GOOGLE_WEB_CLIENT_ID",
+    "336455024363-1gqe3p45ipi811po9cmn9ic7cq8q7sqe.apps.googleusercontent.com",
+)
+
+
+def verify_google_id_token(id_token: str) -> dict:
+    """Verify a Google ID token with Google's tokeninfo endpoint.
+
+    Returns the token claims (email, sub, name, picture...) or raises HTTPException.
+    """
+    url = "https://oauth2.googleapis.com/tokeninfo?" + urllib.parse.urlencode({"id_token": id_token})
+    try:
+        with urllib.request.urlopen(url, timeout=10) as resp:
+            claims = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError:
+        raise HTTPException(status_code=401, detail="Invalid or expired Google token.")
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Could not verify Google token: {e}")
+
+    if claims.get("aud") != GOOGLE_WEB_CLIENT_ID:
+        raise HTTPException(status_code=401, detail="Google token was issued for a different app.")
+    if claims.get("iss") not in ("accounts.google.com", "https://accounts.google.com"):
+        raise HTTPException(status_code=401, detail="Google token issuer is invalid.")
+    if str(claims.get("email_verified")).lower() != "true":
+        raise HTTPException(status_code=401, detail="Google email is not verified.")
+    return claims
+
+
+@app.post("/api/auth/google")
+def google_auth(payload: GoogleAuthRequest):
+    """Log in with Google; a new user is automatically registered in MongoDB."""
+    try:
+        if not payload.id_token:
+            raise HTTPException(status_code=400, detail="Missing Google ID token.")
+
+        claims = verify_google_id_token(payload.id_token)
+        email = claims["email"]
+
+        res = cloud_db.google_login_or_register(
+            email=email,
+            name=claims.get("name") or payload.name or email.split("@")[0].capitalize(),
+            google_id=claims.get("sub"),
+            photo_url=claims.get("picture") or payload.photo_url
+        )
+        if res.get("success"):
+            return res
+        raise HTTPException(status_code=400, detail=res.get("error", "Google authentication failed"))
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Auth] Google auth exception: {e}")
+        raise HTTPException(status_code=500, detail=f"Server error: {e}")

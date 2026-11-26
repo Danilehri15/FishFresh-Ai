@@ -88,6 +88,108 @@ class CloudDBService:
                 return {"success": True, "user_id": uid, "name": u.get("name", "User"), "plan": u.get("plan", "FREE")}
         return {"success": False, "error": "Invalid email or password"}
 
+    def google_login_or_register(self, email: str, name: str, google_id: Optional[str] = None, photo_url: Optional[str] = None) -> Dict[str, Any]:
+        clean_email = email.lower().strip()
+        clean_name = name.strip() if name and name.strip() else clean_email.split("@")[0].capitalize()
+        gid = google_id or str(uuid.uuid4())
+        
+        if self.db is not None:
+            try:
+                user = self.db.users.find_one({"email": clean_email})
+                if user:
+                    # User already exists in MongoDB: update login timestamp and Google details
+                    update_data = {
+                        "auth_provider": "google",
+                        "google_id": gid,
+                        "last_login": datetime.now(timezone.utc)
+                    }
+                    if photo_url:
+                        update_data["photo_url"] = photo_url
+                    if not user.get("name") or user.get("name") == "User":
+                        update_data["name"] = clean_name
+
+                    self.db.users.update_one({"_id": user["_id"]}, {"$set": update_data})
+                    print(f"[CloudDB] Existing user logged in with Google via MongoDB: {clean_email}")
+                    return {
+                        "success": True,
+                        "user_id": user["user_id"],
+                        "name": user.get("name", clean_name),
+                        "email": clean_email,
+                        "photo_url": user.get("photo_url", photo_url),
+                        "plan": user.get("plan", "FREE"),
+                        "auth_provider": "google",
+                        "is_new_user": False
+                    }
+                else:
+                    # New user: AUTOMATICALLY register into MongoDB Atlas
+                    user_id = str(uuid.uuid4())
+                    user_doc = {
+                        "user_id": user_id,
+                        "email": clean_email,
+                        "name": clean_name,
+                        "google_id": gid,
+                        "photo_url": photo_url,
+                        "auth_provider": "google",
+                        "plan": "FREE",
+                        "created_at": datetime.now(timezone.utc),
+                        "last_login": datetime.now(timezone.utc)
+                    }
+                    self.db.users.insert_one(user_doc)
+                    print(f"[CloudDB] Automatically registered new Google user in MongoDB: {clean_email} (user_id: {user_id})")
+                    return {
+                        "success": True,
+                        "user_id": user_id,
+                        "name": clean_name,
+                        "email": clean_email,
+                        "photo_url": photo_url,
+                        "plan": "FREE",
+                        "auth_provider": "google",
+                        "is_new_user": True
+                    }
+            except Exception as e:
+                print(f"[CloudDB] Error in Google auth with MongoDB: {e}")
+                
+        # In-memory fallback if database connection is offline
+        for uid, u in self.local_users.items():
+            if isinstance(u, dict) and u.get("email") == clean_email:
+                u["auth_provider"] = "google"
+                if photo_url:
+                    u["photo_url"] = photo_url
+                return {
+                    "success": True,
+                    "user_id": uid,
+                    "name": u.get("name", clean_name),
+                    "email": clean_email,
+                    "photo_url": u.get("photo_url", photo_url),
+                    "plan": u.get("plan", "FREE"),
+                    "auth_provider": "google",
+                    "is_new_user": False
+                }
+
+        user_id = str(uuid.uuid4())
+        user_doc = {
+            "user_id": user_id,
+            "email": clean_email,
+            "name": clean_name,
+            "google_id": gid,
+            "photo_url": photo_url,
+            "auth_provider": "google",
+            "plan": "FREE",
+            "created_at": datetime.now(timezone.utc),
+            "last_login": datetime.now(timezone.utc)
+        }
+        self.local_users[user_id] = user_doc
+        return {
+            "success": True,
+            "user_id": user_id,
+            "name": clean_name,
+            "email": clean_email,
+            "photo_url": photo_url,
+            "plan": "FREE",
+            "auth_provider": "google",
+            "is_new_user": True
+        }
+
     def save_scan_history(self, user_id: str, scan_data: Dict[str, Any]):
         scan_record = {
             "user_id": user_id,
